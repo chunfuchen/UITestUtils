@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		739AA4FA1CEFAC9800473C9C /* XCTestCase+ImageComparison.swift in Sources */ = {isa = PBXBuildFile; fileRef = 739AA4F91CEFAC9800473C9C /* XCTestCase+ImageComparison.swift */; };
+		739AA4FC1CEFACA000473C9C /* ImageUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 739AA4FB1CEFACA000473C9C /* ImageUtilities.swift */; };
 		CE60102D1B4746F400773C38 /* UITestUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = CE60102C1B4746F400773C38 /* UITestUtils.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		CE6010341B4746F400773C38 /* UITestUtils.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE6010291B4746F400773C38 /* UITestUtils.framework */; };
 		CE6010391B4746F400773C38 /* UITestUtilsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE6010381B4746F400773C38 /* UITestUtilsTests.swift */; };
@@ -42,6 +44,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		739AA4F91CEFAC9800473C9C /* XCTestCase+ImageComparison.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "XCTestCase+ImageComparison.swift"; sourceTree = "<group>"; };
+		739AA4FB1CEFACA000473C9C /* ImageUtilities.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageUtilities.swift; sourceTree = "<group>"; };
 		CE6010291B4746F400773C38 /* UITestUtils.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = UITestUtils.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE60102C1B4746F400773C38 /* UITestUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UITestUtils.h; sourceTree = "<group>"; };
 		CE60102E1B4746F400773C38 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -116,11 +120,13 @@
 				CE9101AB1B5154B6006435D3 /* XCTestCase+Home.swift */,
 				CE9101B11B515DDE006435D3 /* XCTestCase+DeviceInfo.swift */,
 				CE9101B51B5169A8006435D3 /* XCTestCase+Session.swift */,
+				739AA4F91CEFAC9800473C9C /* XCTestCase+ImageComparison.swift */,
 				CEE1DB071B518FBF004460A0 /* NSString+URLEncode.h */,
 				CEE1DB081B518FBF004460A0 /* NSString+URLEncode.m */,
 				CE9101AD1B51551B006435D3 /* FSUtils.h */,
 				CE9101AE1B51551B006435D3 /* FSUtils.m */,
 				CE60102C1B4746F400773C38 /* UITestUtils.h */,
+				739AA4FB1CEFACA000473C9C /* ImageUtilities.swift */,
 				CE60102E1B4746F400773C38 /* Info.plist */,
 			);
 			path = UITestUtils;
@@ -285,6 +291,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE9101B21B515DDE006435D3 /* XCTestCase+DeviceInfo.swift in Sources */,
+				739AA4FA1CEFAC9800473C9C /* XCTestCase+ImageComparison.swift in Sources */,
 				CE8C6EEA1B49323D007CF215 /* XCTestCase+Screenshots.swift in Sources */,
 				CE9101B01B51551B006435D3 /* FSUtils.m in Sources */,
 				CE9101941B51462B006435D3 /* SDStatusBarOverriderPost9_0.m in Sources */,
@@ -295,6 +302,7 @@
 				CE9101B61B5169A8006435D3 /* XCTestCase+Session.swift in Sources */,
 				CE9101A81B51499F006435D3 /* XCTestCase+StatusBar.swift in Sources */,
 				CE9101921B51462B006435D3 /* SDStatusBarOverriderPost8_3.m in Sources */,
+				739AA4FC1CEFACA000473C9C /* ImageUtilities.swift in Sources */,
 				CE9101961B51462B006435D3 /* SDStatusBarOverriderPre8_3.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -420,7 +428,7 @@
 				INFOPLIST_FILE = UITestUtils/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.zabiyaka.UITestUtils;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibm.research.UITestUtils;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -438,7 +446,7 @@
 				INFOPLIST_FILE = UITestUtils/Info.plist;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.zabiyaka.UITestUtils;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ibm.research.UITestUtils;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 			};

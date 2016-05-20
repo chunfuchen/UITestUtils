@@ -26,65 +26,68 @@ import XCTest
 import UITestUtils
 
 class ExampleAppUITests: XCTestCase {
-        
-    override func setUp() {
-        super.setUp()
-        
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-        
-        // In UI tests it is usually best to stop immediately when a failure occurs.
-        continueAfterFailure = false
-        // UI tests must launch the application that they test. Doing this in setup will make sure it happens for each test method.
-        XCUIApplication().launch()
-    }
-    
-    override func tearDown() {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-        super.tearDown()
-    }
-    
-    func testExample() {
-        // Use recording to get started writing UI tests.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        //uiTestServerAddress = "http://localhost:5000"
-        
-        let app = XCUIApplication()
-        waitForDuration(2)
-        
-        overrideStatusBar() // Set 9:41 AM, 100% battery. This change is persistent
-        waitForDuration(2)
-        
-        let tabBar = app.tabBars
-        
-        tabBar.buttons["Second"].tap()
-        waitForDuration(2)
-        
-        saveScreenshot("\(realHomeDirectory)/Temp/Screenshots/\(deviceType)_\(screenResolution)_screenshot1.png")
-        waitForDuration(2)
 
-        orientation = .LandscapeLeft
-        waitForDuration(2)
+  override func setUp() {
+    super.setUp()
 
-        print("Current orientation (as Int): \(orientation.rawValue)")
-        orientation = .Portrait
-        waitForDuration(2)
+    // Put setup code here. This method is called before the invocation
+    //      of each test method in the class.
 
-        let textField = app.textFields["Enter text"]
-        textField.tap()
-        textField.typeText("Alert text")
-        waitForDuration(2)
+    // In UI tests it is usually best to stop immediately when a failure occurs.
+    continueAfterFailure = false
+    // UI tests must launch the application that they test. Doing this in setup
+    //      will make sure it happens for each test method.
+    XCUIApplication().launch()
+  }
 
-        app.buttons["Alert"].tap()
-        waitForDuration(2)
-        
-        app.sheets["Message"].collectionViews
-            .buttons["Ok"].tap()
-        waitForDuration(2)
+  override func tearDown() {
+    // Put teardown code here. This method is called after the invocation of each
+    //      test method in the class.
+    super.tearDown()
+  }
 
-        tabBar.buttons["First"].tap()
-        waitForDuration(2)
-        
-        restoreStatusBar() // Restore original status bar
-        waitForDuration(5)
-    }
+  func testExample() {
+    // Use recording to get started writing UI tests.
+    // Use XCTAssert and related functions to verify your tests produce the correct results.
+    //uiTestServerAddress = "http://localhost:5000"
+    let app = XCUIApplication()
+    waitForDuration(2)
+
+    overrideStatusBar() // Set 9:41 AM, 100% battery. This change is persistent
+    waitForDuration(2)
+
+    let tabBar = app.tabBars
+
+    tabBar.buttons["Second"].tap()
+    waitForDuration(2)
+
+    saveScreenshot("\(realHomeDirectory)/Temp/Screenshots/\(deviceType)_\(screenResolution)_screenshot1.png")
+    waitForDuration(2)
+    UIVerificiation("\(realHomeDirectory)/Temp/Screenshots/\(deviceType)_\(screenResolution)_screenshot1.png")
+    waitForDuration(2)
+    orientation = .LandscapeLeft
+    waitForDuration(2)
+
+    print("Current orientation (as Int): \(orientation.rawValue)")
+    orientation = .Portrait
+    waitForDuration(2)
+
+    let textField = app.textFields["Enter text"]
+    textField.tap()
+    textField.typeText("Alert text")
+    waitForDuration(2)
+
+    app.buttons["Alert"].tap()
+    waitForDuration(2)
+
+    app.sheets["Message"].collectionViews
+      .buttons["Ok"].tap()
+    waitForDuration(2)
+
+    tabBar.buttons["First"].tap()
+    waitForDuration(2)
+
+    restoreStatusBar() // Restore original status bar
+    waitForDuration(5)
+  }
 }

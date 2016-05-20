@@ -25,18 +25,18 @@ import Foundation
 import XCTest
 
 extension XCTestCase {
-    private struct WaitData {
-        static var waitExpectation: XCTestExpectation?
-    }
-    
-    public func waitForDuration(duration: NSTimeInterval) {
-        WaitData.waitExpectation = expectationWithDescription("wait")
-        NSTimer.scheduledTimerWithTimeInterval(duration, target: self,
-            selector: Selector("waitForDurationDone"), userInfo: nil, repeats: false)
-        waitForExpectationsWithTimeout(duration + 3, handler: nil)
-    }
-    
-    func waitForDurationDone() {
-        WaitData.waitExpectation?.fulfill()
-    }
+  private struct WaitData {
+    static var waitExpectation: XCTestExpectation?
+  }
+
+  public func waitForDuration(duration: NSTimeInterval) {
+    WaitData.waitExpectation = expectationWithDescription("wait")
+    NSTimer.scheduledTimerWithTimeInterval(duration, target: self,
+                                           selector: #selector(XCTestCase.waitForDurationDone), userInfo: nil, repeats: false)
+    waitForExpectationsWithTimeout(duration + 3, handler: nil)
+  }
+
+  func waitForDurationDone() {
+    WaitData.waitExpectation?.fulfill()
+  }
 }
