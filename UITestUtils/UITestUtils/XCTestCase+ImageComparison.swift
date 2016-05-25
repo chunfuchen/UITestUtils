@@ -14,16 +14,18 @@ extension XCTestCase {
 
   public func UIVerification(testImageName: String) {
     let start = NSDate()
-    let referenceImagesFolder = realHomeDirectory + "/Temp/Screenshots/ReferenceImages/"
+    let referenceImagesFolder = realHomeDirectory + "/Temp/Screenshots/xxx/"
     var imageList = [String]()
     let fileManager = NSFileManager.defaultManager()
     let enumerator = fileManager.enumeratorAtPath(referenceImagesFolder)
+    var imageShortList = [String]()
     while let element = enumerator?.nextObject() as? String {
       if !element.hasSuffix(".png") {
         continue
       }
       if element.rangeOfString("Diff.png") == nil {
         imageList.append(referenceImagesFolder + element)
+        imageShortList.append(element)
       }
     }
     let testImage = UIImage(contentsOfFile: testImageName)
@@ -31,11 +33,12 @@ extension XCTestCase {
     let ranking = Utilities.sortWithIndex(similiarityScores, ascending: true)
 //    NSLog("\(similiarityScores)")
 
-    let topRankImage = UIImage(contentsOfFile: imageList[ranking[0].0])
+    let topRankImage = UIImage(contentsOfFile: imageList[ranking.first!.0])
     let imageDiff = ImageUtilities.imageComparison(testImage!, topRankImage!)
 
     let imageDiffTemp = UIImagePNGRepresentation(imageDiff!)
-    let imageDiffFileName = imageList[ranking[0].0] + "_Diff.png"
+//    let imageDiffFileName = imageList[ranking[0].0] + "_Diff.png"
+    let imageDiffFileName = testImageName + "_vs_" + imageShortList[ranking.first!.0] + "_Diff.png"
 //    let imageDiffFileName = realHomeDirectory + "/Temp/Screenshots/Diff.png"
     if !imageDiffTemp!.writeToFile(imageDiffFileName, atomically: false) {
       XCTFail("Unable to save the screenshot: \(imageDiffFileName)")

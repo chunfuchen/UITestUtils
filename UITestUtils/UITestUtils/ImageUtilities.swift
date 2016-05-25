@@ -85,7 +85,7 @@ class ImageUtilities {
     let alphaInfo = CGImageAlphaInfo.PremultipliedLast.rawValue //CGImageGetAlphaInfo(inputCGImage)
     let bitmapInfo = CGBitmapInfo.ByteOrder32Big.rawValue //CGImageGetBitmapInfo(inputCGImage)
 
-    var inputPixels = Array<UInt32>(count: inputWidth * inputHeight * sizeof(UInt32),
+    var inputPixels = Array<UInt32>(count: inputWidth * inputHeight,
                                     repeatedValue: 0)
     //    let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.PremultipliedLast.rawValue | CGBitmapInfo.ByteOrder32Big.rawValue)
     let context = CGBitmapContextCreate(UnsafeMutablePointer<Void>(inputPixels), inputWidth,
@@ -121,7 +121,7 @@ class ImageUtilities {
     let alphaInfo = CGImageAlphaInfo.PremultipliedLast.rawValue //CGImageGetAlphaInfo(inputCGImage)
     let bitmapInfo = CGBitmapInfo.ByteOrder32Big.rawValue //CGImageGetBitmapInfo(inputCGImage)
 
-    let inputPixels = Array<UInt32>(count: inputWidth * inputHeight * sizeof(UInt32),
+    let inputPixels = Array<UInt32>(count: inputWidth * inputHeight,
                                     repeatedValue: 0)
     //    let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.PremultipliedLast.rawValue | CGBitmapInfo.ByteOrder32Big.rawValue)
     let context = CGBitmapContextCreate(UnsafeMutablePointer<Void>(inputPixels), inputWidth,
@@ -144,7 +144,7 @@ class ImageUtilities {
     let alphaInfo = CGImageAlphaInfo.PremultipliedLast.rawValue //CGImageGetAlphaInfo(inputCGImage)
     let bitmapInfo = CGBitmapInfo.ByteOrder32Big.rawValue //CGImageGetBitmapInfo(inputCGImage)
 
-    var inputPixels = Array<UInt32>(count: inputWidth * inputHeight * sizeof(UInt32),
+    var inputPixels = Array<UInt32>(count: inputWidth * inputHeight,
                                     repeatedValue: 0)
     //    let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.PremultipliedLast.rawValue | CGBitmapInfo.ByteOrder32Big.rawValue)
     let context = CGBitmapContextCreate(UnsafeMutablePointer<Void>(inputPixels), inputWidth,
@@ -170,7 +170,7 @@ class ImageUtilities {
   static func frameDifference(imageA: [Float], _ imageB:[Float], _ imageWidth: Int, _ imageHeight: Int, _ imageChannel: Int) -> Float {
     let imagePixel = imageWidth * imageHeight
     var diff: Float = 0.0
-    let statusBarPixelOffset = 40 * imageWidth
+    let statusBarPixelOffset = 0//40 * imageWidth
     for i in 0..<3 {
       let pixelStartOffset = i * imagePixel + statusBarPixelOffset
       let pixelEndOffset = (i + 1) * imagePixel
@@ -181,8 +181,8 @@ class ImageUtilities {
       vDSP_vsub(imageATemp, 1, imageBTemp, 1, &imageDiffTemp, 1, vDSP_Length(imageDiffTemp.count))
       vDSP_vabs(imageDiffTemp, 1, &imageDiffTemp, 1, vDSP_Length(imageDiffTemp.count))
       vDSP_vswsum(imageDiffTemp, 1, &diffTemp, 1, 1, vDSP_Length(imageDiffTemp.count))
-//      diff += (diffTemp / Float(imageDiffTemp.count))
-      diff += diffTemp
+      diff += (diffTemp / Float(imageDiffTemp.count))
+//      diff += diffTemp
     }
     return diff
   }
@@ -198,11 +198,14 @@ class ImageUtilities {
     let imageWidth = Int(testImage.size.width)
     let imageHeight = Int(testImage.size.height)
     for image in imageList {
-      let refImage = UIImage(contentsOfFile: image)
+      var refImage = UIImage(contentsOfFile: image)
       if refImage == nil {
         NSLog("\(image) is not an image.")
         scores.append(FLT_MAX)
         continue
+      }
+      if Int(refImage!.size.height) != imageHeight ||  Int(refImage!.size.width) != imageWidth {
+        refImage = ImageUtilities.resizeImage(refImage!, scaledToSize: testImage.size)
       }
       let refImageRawData = ImageUtilities.getFloatBuffer(refImage!)
       let diff = ImageUtilities.similiarityMeasurement(testImageRawData, refImageRawData, imageWidth, imageHeight, 4)
@@ -211,10 +214,8 @@ class ImageUtilities {
     return scores
   }
 
-  static func imageComparison(imageA: UIImage, _ imageB: UIImage) -> UIImage? {
-    let imageARawData = ImageUtilities.getUInt32Buffer(imageA)
-    let imageBRawData = ImageUtilities.getUInt32Buffer(imageB)
-    let cgImageA = imageA.CGImage!
+  static func imageComparison(testImage: UIImage, _ refImage: UIImage) -> UIImage? {
+    let cgImageA = testImage.CGImage!
     let imageWidth = CGImageGetWidth(cgImageA)
     let imageHeight = CGImageGetHeight(cgImageA)
     let bitsPerComponent = CGImageGetBitsPerComponent(cgImageA)
@@ -224,7 +225,16 @@ class ImageUtilities {
     let bitmapInfo = CGImageGetBitmapInfo(cgImageA)
     let RGBAWhite: UInt32  = 0xFFFFFFFF
     let RGBABlack: UInt32 = 0xFF000000
-    let heightOfStatusBar = 40
+    let heightOfStatusBar = 0 //40
+    let imageARawData = ImageUtilities.getUInt32Buffer(testImage)
+
+    var resizeImage = refImage
+    if Int(refImage.size.height) != imageHeight ||  Int(refImage.size.width) != imageWidth {
+      resizeImage = ImageUtilities.resizeImage(refImage, scaledToSize: testImage.size)
+    }
+
+    let imageBRawData = ImageUtilities.getUInt32Buffer(resizeImage)
+
 
     var imageDiffTemp = Array<UInt32>(count: imageWidth * imageHeight, repeatedValue: RGBABlack)
 
