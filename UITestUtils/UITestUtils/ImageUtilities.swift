@@ -8,6 +8,8 @@
 
 import Foundation
 import UIKit
+import Accelerate
+import Darwin
 
 class ImageUtilities {
 
@@ -125,9 +127,122 @@ class ImageUtilities {
     let context = CGBitmapContextCreate(UnsafeMutablePointer<Void>(inputPixels), inputWidth,
                                         inputHeight, bitsPerComponent, inputBytesPerRow,
                                         colorSpace, alphaInfo | bitmapInfo);
+    CGContextDrawImage(context, CGRectMake(0, 0, CGFloat(inputWidth), CGFloat(inputHeight)), inputCGImage);
+    return inputPixels
+  }
+
+  static func getFloatBuffer(inputImage: UIImage) -> [Float] {
+
+    let inputCGImage = inputImage.CGImage
+    let inputWidth = CGImageGetWidth(inputCGImage)
+    let inputHeight = CGImageGetHeight(inputCGImage)
+    let colorSpace = CGColorSpaceCreateDeviceRGB()
+    let bytesPerPixel = 4 //CGImageGetBitsPerPixel(inputCGImage) / 8
+    let bitsPerComponent = 8 //CGImageGetBitsPerComponent(inputCGImage)
+    //    let inputBytesPerRow = CGImageGetBytesPerRow(inputCGImage)
+    let inputBytesPerRow = bytesPerPixel * inputWidth;
+    let alphaInfo = CGImageAlphaInfo.PremultipliedLast.rawValue //CGImageGetAlphaInfo(inputCGImage)
+    let bitmapInfo = CGBitmapInfo.ByteOrder32Big.rawValue //CGImageGetBitmapInfo(inputCGImage)
+
+    var inputPixels = Array<UInt32>(count: inputWidth * inputHeight * sizeof(UInt32),
+                                    repeatedValue: 0)
+    //    let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.PremultipliedLast.rawValue | CGBitmapInfo.ByteOrder32Big.rawValue)
+    let context = CGBitmapContextCreate(UnsafeMutablePointer<Void>(inputPixels), inputWidth,
+                                        inputHeight, bitsPerComponent, inputBytesPerRow,
+                                        colorSpace, alphaInfo | bitmapInfo);
     CGContextDrawImage(context, CGRectMake(0, 0, CGFloat(inputWidth), CGFloat(inputHeight)),
                        inputCGImage);
-    return inputPixels
+
+    var bytesArray = Array<Float>(count: inputWidth * inputHeight * 4, repeatedValue: 0)
+    for j in 0..<inputWidth {
+      for i in 0..<inputHeight {
+        let pixel = inputPixels[(j * inputWidth) + i]
+        let color = self.extractRGBA(pixel)
+        bytesArray[j * inputWidth + i] = Float(color.red)
+        bytesArray[1 * inputWidth * inputHeight + j * inputWidth + i] = Float(color.green)
+        bytesArray[2 * inputWidth * inputHeight + j * inputWidth + i] = Float(color.blue)
+        bytesArray[3 * inputWidth * inputHeight + j * inputWidth + i] = Float(color.alpha)
+      }
+    }
+    return bytesArray
+  }
+
+  static func frameDifference(imageA: [Float], _ imageB:[Float], _ imageWidth: Int, _ imageHeight: Int, _ imageChannel: Int) -> Float {
+    let imagePixel = imageWidth * imageHeight
+    var diff: Float = 0.0
+    let statusBarPixelOffset = 40 * imageWidth
+    for i in 0..<3 {
+      let pixelStartOffset = i * imagePixel + statusBarPixelOffset
+      let pixelEndOffset = (i + 1) * imagePixel
+      let imageATemp = Array(imageA[pixelStartOffset..<pixelEndOffset])
+      let imageBTemp = Array(imageB[pixelStartOffset..<pixelEndOffset])
+      var imageDiffTemp = Array<Float>(count: pixelEndOffset - pixelStartOffset, repeatedValue: 0.0)
+      var diffTemp: Float = 0.0
+      vDSP_vsub(imageATemp, 1, imageBTemp, 1, &imageDiffTemp, 1, vDSP_Length(imageDiffTemp.count))
+      vDSP_vabs(imageDiffTemp, 1, &imageDiffTemp, 1, vDSP_Length(imageDiffTemp.count))
+      vDSP_vswsum(imageDiffTemp, 1, &diffTemp, 1, 1, vDSP_Length(imageDiffTemp.count))
+//      diff += (diffTemp / Float(imageDiffTemp.count))
+      diff += diffTemp
+    }
+    return diff
+  }
+
+  static func similiarityMeasurement(imageA: [Float], _ imageB:[Float], _ imageWidth: Int, _ imageHeight: Int, _ imageChannel: Int) -> Float {
+    return ImageUtilities.frameDifference(imageA, imageB, imageWidth, imageHeight, imageChannel)
+  }
+
+  static func imageRetrieve(testImage: UIImage, imageList: [String]) -> [Float] {
+    var scores = [Float]()
+    let testImageRawData = ImageUtilities.getFloatBuffer(testImage)
+
+    let imageWidth = Int(testImage.size.width)
+    let imageHeight = Int(testImage.size.height)
+    for image in imageList {
+      let refImage = UIImage(contentsOfFile: image)
+      if refImage == nil {
+        NSLog("\(image) is not an image.")
+        scores.append(FLT_MAX)
+        continue
+      }
+      let refImageRawData = ImageUtilities.getFloatBuffer(refImage!)
+      let diff = ImageUtilities.similiarityMeasurement(testImageRawData, refImageRawData, imageWidth, imageHeight, 4)
+      scores.append(diff)
+    }
+    return scores
+  }
+
+  static func imageComparison(imageA: UIImage, _ imageB: UIImage) -> UIImage? {
+    let imageARawData = ImageUtilities.getUInt32Buffer(imageA)
+    let imageBRawData = ImageUtilities.getUInt32Buffer(imageB)
+    let cgImageA = imageA.CGImage!
+    let imageWidth = CGImageGetWidth(cgImageA)
+    let imageHeight = CGImageGetHeight(cgImageA)
+    let bitsPerComponent = CGImageGetBitsPerComponent(cgImageA)
+    let bitsPerPixel = CGImageGetBitsPerPixel(cgImageA)
+    let bytesPerRow = CGImageGetBytesPerRow(cgImageA)
+    let colorSpace = CGColorSpaceCreateDeviceRGB()
+    let bitmapInfo = CGImageGetBitmapInfo(cgImageA)
+    let RGBAWhite: UInt32  = 0xFFFFFFFF
+    let RGBABlack: UInt32 = 0xFF000000
+    let heightOfStatusBar = 40
+
+    var imageDiffTemp = Array<UInt32>(count: imageWidth * imageHeight, repeatedValue: RGBABlack)
+
+    for j in heightOfStatusBar..<imageHeight {
+      for i in 0..<imageWidth {
+        if imageARawData[j * imageWidth + i] != imageBRawData[j * imageWidth + i] {
+          imageDiffTemp[j * imageWidth + i] = RGBAWhite
+        } else {
+          imageDiffTemp[j * imageWidth + i] = RGBABlack
+        }
+      }
+    }
+
+    let cgProviderImageDiff = CGDataProviderCreateWithData(nil, imageDiffTemp, imageDiffTemp.count * bitsPerPixel / 8, nil)
+    let cgImageDiff = CGImageCreate(imageWidth, imageHeight, bitsPerComponent, bitsPerPixel, bytesPerRow, colorSpace, bitmapInfo, cgProviderImageDiff, nil, false, CGColorRenderingIntent.RenderingIntentDefault)
+    
+    let returnImage = UIImage(CGImage: cgImageDiff!)
+    return returnImage
   }
 
   static func imageDifference(imageA: UIImage, _ imageB: UIImage) -> UIImage? {
@@ -189,4 +304,37 @@ class ImageUtilities {
     return returnImage
 
   }
+}
+
+class Utilities {
+  static func loadTextFileAsStringArray(textFileName: String) -> [String]? {
+    var results:[String]? = nil
+    do {
+      let fileNames = try String(contentsOfFile: textFileName, encoding: NSUTF8StringEncoding)
+      results = fileNames.characters.split {$0 == "\n"}.map(String.init)
+    } catch {
+      print("loadLabelFile: load file error, \(error)")
+    }
+    return results
+  }
+
+  static func sortWithIndex(inputArray: [Float], ascending: Bool = false) -> [(Int, Float)] {
+    var arrayWithIndex = Dictionary<Int, Float> ()
+    for i in 0..<inputArray.count {
+      arrayWithIndex[i] = inputArray[i]
+    }
+    if ascending {
+      let scoresTupleArray = arrayWithIndex.sort {
+        $0.1 < $1.1
+      }
+      return scoresTupleArray
+    } else {
+      let scoresTupleArray = arrayWithIndex.sort {
+        $0.1 > $1.1
+      }
+      return scoresTupleArray
+    }
+
+  }
+
 }
