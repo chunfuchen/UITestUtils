@@ -12,9 +12,8 @@ import XCTest
 
 extension XCTestCase {
 
-  public func UIVerification(testImageName: String) {
+  public func UIVerification(testImageName: String, _ referenceImagesFolder: String) {
     let start = NSDate()
-    let referenceImagesFolder = realHomeDirectory + "/Temp/Screenshots/xxx/"
     var imageList = [String]()
     let fileManager = NSFileManager.defaultManager()
     let enumerator = fileManager.enumeratorAtPath(referenceImagesFolder)
@@ -28,53 +27,68 @@ extension XCTestCase {
         imageShortList.append(element)
       }
     }
-    let testImage = UIImage(contentsOfFile: testImageName)
+    var testImage = UIImage(contentsOfFile: testImageName)
+    // random pick one reference image to resize testImage
+    let randRefImage = UIImage(contentsOfFile: imageList.first!)
+    if randRefImage!.size != testImage!.size {
+      testImage = ImageUtilities.resizeImage(testImage!, scaledToSize: randRefImage!.size)
+    }
+
     var similiarityScores = ImageUtilities.imageRetrieve(testImage!, imageList: imageList)
     let ranking = Utilities.sortWithIndex(similiarityScores, ascending: true)
-//    NSLog("\(similiarityScores)")
-
-    let topRankImage = UIImage(contentsOfFile: imageList[ranking.first!.0])
-    let imageDiff = ImageUtilities.imageComparison(testImage!, topRankImage!)
-
-    let imageDiffTemp = UIImagePNGRepresentation(imageDiff!)
-//    let imageDiffFileName = imageList[ranking[0].0] + "_Diff.png"
-    let imageDiffFileName = testImageName + "_vs_" + imageShortList[ranking.first!.0] + "_Diff.png"
-//    let imageDiffFileName = realHomeDirectory + "/Temp/Screenshots/Diff.png"
-    if !imageDiffTemp!.writeToFile(imageDiffFileName, atomically: false) {
-      XCTFail("Unable to save the screenshot: \(imageDiffFileName)")
-    }
     let end = NSDate()
     let elapsedTime = end.timeIntervalSinceDate(start)
-//    NSLog("Comparing image spends \(elapsedTime) seconds\n")
-  }
+    NSLog("\(ranking)")
+    if ranking.first!.1 > 30.0 {
+      return
+    }
+    let topRankImage = UIImage(contentsOfFile: imageList[ranking.first!.0])
+    let imageDiffAll = ImageUtilities.imageComparison(testImage!, topRankImage!)
+    let imageDiff = imageDiffAll.first!
+    let imageDiffGray = imageDiffAll.last!
 
-  public func UIVerification2(testName: String) {
-    let testImage = UIImage(contentsOfFile: testName)
-    let testImageSize = testImage!.size
-    NSLog("Test image size \(Int(testImageSize.width))x\(Int(testImageSize.height))")
-    // Get reference image
-
-    var refImage = UIImage(contentsOfFile: "/Users/cfchen/Temp/Screenshots/phone_750x1334_screenshot1_ori.png")
-
-    var refImageSize = refImage!.size
-    NSLog("Ref image size \(Int(refImageSize.width))x\(Int(refImageSize.height))")
-
-    if testImageSize.width != refImageSize.width || testImageSize.height != refImageSize.height {
-      refImage = ImageUtilities.resizeImage(refImage!, scaledToSize: testImageSize)
-      NSLog("Size is different")
-      refImageSize = refImage!.size
-      if testImageSize.width == refImageSize.width && testImageSize.height == refImageSize.height {
-        NSLog("Size is identical")
-      }
-//      UIImageWriteToSavedPhotosAlbum(resizedRefImage!, nil, nil, nil)
-    } else {
-//      UIImageWriteToSavedPhotosAlbum(refImage!, nil, nil, nil)
+    var textSize = CGFloat(40)
+    var textCenter = 375
+    var textOffset = 10
+    if topRankImage!.size.width == CGFloat(375) {
+      textSize = CGFloat(20)
+      textCenter /= 2
+      textOffset /= 2
     }
 
-    let imageDiff = ImageUtilities.imageDifference(testImage!, refImage!)
-    UIImageWriteToSavedPhotosAlbum(testImage!, nil, nil, nil)
-    UIImageWriteToSavedPhotosAlbum(refImage!, nil, nil, nil)
-    UIImageWriteToSavedPhotosAlbum(imageDiff!, nil, nil, nil)
-  }
+    var textRef = "Ground Truth"
+    var textLocation = CGRect(x: textCenter - textRef.characters.count * textOffset, y: 0, width: 1, height: 1)
+    let textRefImage = UIImage.setupTextImage(textRef, imageSize: topRankImage!.size,
+                                              faceRect: textLocation, textSize: textSize)
+    let topRankImageWithText = ImageUtilities.overlayTextImageOnImage(
+      textRefImage!, topRankImage!)
 
+    var textTest = "App Screenshot"
+    textLocation = CGRect(x: textCenter - textTest.characters.count * textOffset, y: 0, width: 1, height: 1)
+    let textTestImage = UIImage.setupTextImage(textTest, imageSize: testImage!.size,
+                                               faceRect: textLocation, textSize: textSize)
+    let testImageWithText = ImageUtilities.overlayTextImageOnImage(
+      textTestImage!, testImage!)
+
+    var textGray = "Intensity Difference"
+    textLocation = CGRect(x: textCenter - textGray.characters.count * textOffset, y: 0, width: 1, height: 1)
+    var textDiffGrayImage = UIImage.setupTextImage(textGray, imageSize: testImage!.size,
+                                                   faceRect: textLocation, textSize: textSize)
+    let textDiffGrayImageWithText = ImageUtilities.overlayTextImageOnImage(
+      textDiffGrayImage!, imageDiffGray!)
+
+    var imageArray = [UIImage]()
+    imageArray.append(imageDiff!)
+    imageArray.append(textDiffGrayImageWithText!)
+    imageArray.append(topRankImageWithText!)
+    imageArray.append(testImageWithText!)
+    let imageConcat = ImageUtilities.imageConcatenation(imageArray)
+
+    let imageConcatTemp = UIImagePNGRepresentation(imageConcat)
+    let imageConcatFileName = testImageName + "_vs_" + imageShortList[ranking.first!.0] + "_Concat.png"
+    if !imageConcatTemp!.writeToFile(imageConcatFileName, atomically: false) {
+      XCTFail("Unable to save the screenshot: \(imageConcatFileName)")
+    }
+//    NSLog("Comparing image spends \(elapsedTime) seconds\n")
+  }
 }
