@@ -202,39 +202,43 @@ class ImageUtilities {
   }
 
   static func imageComparison(testImage: UIImage, _ refImage: UIImage) -> [UIImage?] {
-    var resizedTestImage = testImage
-    if testImage.size != refImage.size {
-      resizedTestImage = ImageUtilities.resizeImage(testImage, scaledToSize: refImage.size)
-    }
-    let cgImageA = refImage.CGImage!
-    let imageWidth = CGImageGetWidth(cgImageA)
-    let imageHeight = CGImageGetHeight(cgImageA)
-    let bitsPerComponent = CGImageGetBitsPerComponent(cgImageA)
-    let bitsPerPixel = CGImageGetBitsPerPixel(cgImageA)
-    let bytesPerRow = CGImageGetBytesPerRow(cgImageA)
-    let colorSpace = CGColorSpaceCreateDeviceRGB()
-    let bitmapInfo = CGImageGetBitmapInfo(cgImageA)
+//    var resizedTestImage = testImage
+//    if testImage.size != refImage.size {
+//      resizedTestImage = ImageUtilities.resizeImage(testImage, scaledToSize: refImage.size)
+//    }
+//    let cgImageA = refImage.CGImage!
+//    let imageWidth = CGImageGetWidth(cgImageA)
+//    let imageHeight = CGImageGetHeight(cgImageA)
+//    let bitsPerComponent = CGImageGetBitsPerComponent(cgImageA)
+//    let bitsPerPixel = CGImageGetBitsPerPixel(cgImageA)
+//    let bytesPerRow = CGImageGetBytesPerRow(cgImageA)
+//    let colorSpace = CGColorSpaceCreateDeviceRGB()
+//    let bitmapInfo = CGImageGetBitmapInfo(cgImageA)
+//    let imageARawData = ImageUtilities.getUInt32Buffer(resizedTestImage)
+//    let imageBRawData = ImageUtilities.getUInt32Buffer(refImage)
+//
+//    var imageDiffTemp = Array<UInt32>(count: imageWidth * imageHeight, repeatedValue: RGBABlack)
+    let rgbaTest = RGBA(image: testImage)!
+    let rgbaRef = RGBA(image: refImage)!
+    let rgbaDiff = RGBA(image: testImage)!
+
+    let imageWidth = rgbaRef.width
+    let imageHeight = rgbaRef.height
     let RGBAWhite: UInt32  = 0xFFFFFFFF
     let RGBABlack: UInt32 = 0xFF000000
     var heightOfStatusBar = 40
     if imageWidth != 750 {
       heightOfStatusBar = 20
     }
-    let imageARawData = ImageUtilities.getUInt32Buffer(resizedTestImage)
-    let imageBRawData = ImageUtilities.getUInt32Buffer(refImage)
-
-    var imageDiffTemp = Array<UInt32>(count: imageWidth * imageHeight, repeatedValue: RGBABlack)
-    let rgbaTest = RGBA(image: testImage)!
-    let rbgaRef = RGBA(image: refImage)!
 
     for j in 0..<imageHeight {
       for i in 0..<imageWidth {
         let testY: Float = (Float(rgbaTest.pixels[j * imageWidth + i].red) +
                     Float(rgbaTest.pixels[j * imageWidth + i].green) +
                     Float(rgbaTest.pixels[j * imageWidth + i].blue))/3
-        let refY: Float =  (Float(rbgaRef.pixels[j * imageWidth + i].red) +
-                    Float(rbgaRef.pixels[j * imageWidth + i].green) +
-                    Float(rbgaRef.pixels[j * imageWidth + i].blue))/3
+        let refY: Float =  (Float(rgbaRef.pixels[j * imageWidth + i].red) +
+                    Float(rgbaRef.pixels[j * imageWidth + i].green) +
+                    Float(rgbaRef.pixels[j * imageWidth + i].blue))/3
 
         let absDiffY: UInt8 = UInt8(fabs(testY - refY))
 
@@ -242,27 +246,27 @@ class ImageUtilities {
           rgbaTest.pixels[j * imageWidth + i].red = 0
           rgbaTest.pixels[j * imageWidth + i].green = 0
           rgbaTest.pixels[j * imageWidth + i].blue = 0
+
+            rgbaDiff.pixels[j * imageWidth + i].value = RGBABlack
         } else {
           rgbaTest.pixels[j * imageWidth + i].red = absDiffY
           rgbaTest.pixels[j * imageWidth + i].green = absDiffY
           rgbaTest.pixels[j * imageWidth + i].blue = absDiffY
-        }
-        if j < heightOfStatusBar {
-          imageDiffTemp[j * imageWidth + i] = RGBABlack
-        } else {
-          if imageARawData[j * imageWidth + i] != imageBRawData[j * imageWidth + i] {
-            imageDiffTemp[j * imageWidth + i] = RGBAWhite
+
+          if rgbaDiff.pixels[j * imageWidth + i].value != rgbaRef.pixels[j * imageWidth + i].value {
+            rgbaDiff.pixels[j * imageWidth + i].value = RGBAWhite
           } else {
-            imageDiffTemp[j * imageWidth + i] = RGBABlack
+            rgbaDiff.pixels[j * imageWidth + i].value = RGBABlack
           }
         }
       }
     }
     let diffImage = rgbaTest.toUIImage()
-    let cgProviderImageDiff = CGDataProviderCreateWithData(nil, imageDiffTemp, imageDiffTemp.count * bitsPerPixel / 8, nil)
-    let cgImageDiff = CGImageCreate(imageWidth, imageHeight, bitsPerComponent, bitsPerPixel, bytesPerRow, colorSpace, bitmapInfo, cgProviderImageDiff, nil, false, CGColorRenderingIntent.RenderingIntentDefault)
-    
-    let binaryImage = UIImage(CGImage: cgImageDiff!)
+    let binaryImage = rgbaDiff.toUIImage()
+//    let cgProviderImageDiff = CGDataProviderCreateWithData(nil, imageDiffTemp, imageDiffTemp.count * bitsPerPixel / 8, nil)
+//    let cgImageDiff = CGImageCreate(imageWidth, imageHeight, bitsPerComponent, bitsPerPixel, bytesPerRow, colorSpace, bitmapInfo, cgProviderImageDiff, nil, false, CGColorRenderingIntent.RenderingIntentDefault)
+//    
+//    let binaryImage = UIImage(CGImage: cgImageDiff!)
     return [binaryImage, diffImage]
   }
 
