@@ -1,5 +1,11 @@
 # TestUtils
 
+On top of UITestUtils, I integrate the screenshot comparison capability.
+Please refer to UITestUtils/UITestUtils/XCTestCase+ImageComparison.swift 
+
+The following readme is inherited from origin [github]
+(https://github.com/zmeyc/UITestUtils). Please following the installation instruction to setup your project.
+
 UITestUtils extend Xcode7 UI Testing framework (XCTest).
 
 ```swift
