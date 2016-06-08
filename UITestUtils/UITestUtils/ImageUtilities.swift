@@ -121,7 +121,6 @@ class ImageUtilities {
       let pixelEndOffset = (i + 1) * imagePixel
       let imageATemp = Array(imageA[pixelStartOffset..<pixelEndOffset])
       let imageBTemp = Array(imageB[pixelStartOffset..<pixelEndOffset])
-      var imageDiffTemp = Array<Float>(count: pixelEndOffset - pixelStartOffset, repeatedValue: 0.0)
       var diffTemp: Float = 0.0
       for i in 0..<imageBTemp.count {
         diffTemp += fabs(imageATemp[i] - imageBTemp[i])
@@ -272,7 +271,6 @@ class ImageUtilities {
     if imageWidth != 750 {
       heightOfStatusBar = 20
     }
-
     for j in 0..<imageHeight {
       for i in 0..<imageWidth {
         let testY: Float = (Float(rgbaTest.pixels[j * imageWidth + i].red) +
@@ -283,13 +281,11 @@ class ImageUtilities {
                     Float(rgbaRef.pixels[j * imageWidth + i].blue))/3
 
         let absDiffY: UInt8 = UInt8(fabs(testY - refY))
-
         if j < heightOfStatusBar {
           rgbaTest.pixels[j * imageWidth + i].red = 0
           rgbaTest.pixels[j * imageWidth + i].green = 0
           rgbaTest.pixels[j * imageWidth + i].blue = 0
-
-            rgbaDiff.pixels[j * imageWidth + i].value = RGBABlack
+          rgbaDiff.pixels[j * imageWidth + i].value = RGBABlack
         } else {
           rgbaTest.pixels[j * imageWidth + i].red = absDiffY
           rgbaTest.pixels[j * imageWidth + i].green = absDiffY
@@ -303,6 +299,7 @@ class ImageUtilities {
         }
       }
     }
+
     let diffImage = rgbaTest.toUIImage()
     let binaryImage = rgbaDiff.toUIImage()
     return [binaryImage, diffImage]
@@ -364,6 +361,21 @@ class ImageUtilities {
     UIGraphicsEndImageContext()
     return resultImage
   }
+
+  static func imageBlending(imageA: UIImage, _ imageB: UIImage, _ ratioOfImageA: Float)
+    -> UIImage? {
+    let size = imageA.size
+    UIGraphicsBeginImageContext(size)
+    let areaSize = CGRect(x: 0, y: 0, width: size.width, height: size.height)
+
+    imageA.drawInRect(areaSize)
+    imageB.drawInRect(areaSize, blendMode: CGBlendMode.Normal,
+                      alpha: CGFloat(ratioOfImageA))
+    let resultImage = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    return resultImage
+  }
+
 }
 
 class Utilities {

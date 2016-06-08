@@ -57,6 +57,8 @@ extension XCTestCase {
       textOffset /= 2
     }
 
+    let blendedImage = ImageUtilities.imageBlending(topRankImage!, testImage!, Float(0.5))
+
     let textRef = "Ground Truth"
     var textLocation = CGRect(x: textCenter - textRef.characters.count * textOffset, y: 0, width: 1, height: 1)
     let textRefImage = UIImage.setupTextImage(textRef, imageSize: topRankImage!.size,
@@ -72,15 +74,25 @@ extension XCTestCase {
       textTestImage!, testImage!)
 
     let textGray = "Intensity Difference"
-    textLocation = CGRect(x: textCenter - textGray.characters.count * textOffset, y: 0, width: 1, height: 1)
+    textLocation = CGRect(x: textCenter - textGray.characters.count * textOffset,
+                          y: 0, width: 1, height: 1)
     let textDiffGrayImage = UIImage.setupTextImage(textGray, imageSize: testImage!.size,
                                                    faceRect: textLocation, textSize: textSize)
     let textDiffGrayImageWithText = ImageUtilities.overlayTextImageOnImage(
       textDiffGrayImage!, imageDiffGray!)
 
+    let textBlend = "Blended Image"
+    textLocation = CGRect(x: textCenter - textBlend.characters.count * textOffset,
+                          y: 0, width: 1, height: 1)
+    let textBlendImage = UIImage.setupTextImage(textBlend, imageSize: blendedImage!.size,
+                                                faceRect: textLocation, textSize: textSize)
+    let textBlendImageWithText = ImageUtilities.overlayTextImageOnImage(
+      textBlendImage!, blendedImage!)
+
     var imageArray = [UIImage]()
     imageArray.append(imageDiff!)
     imageArray.append(textDiffGrayImageWithText!)
+    imageArray.append(textBlendImageWithText!)
     imageArray.append(topRankImageWithText!)
     imageArray.append(testImageWithText!)
     let imageConcat = ImageUtilities.imageConcatenation(imageArray)
