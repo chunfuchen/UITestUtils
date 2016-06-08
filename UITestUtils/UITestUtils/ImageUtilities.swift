@@ -76,16 +76,7 @@ struct RGBA {
 
 class ImageUtilities {
 
-  static func resizeImage(image: UIImage, scaledToSize: CGSize) -> UIImage {
-    UIGraphicsBeginImageContextWithOptions(scaledToSize, false, 1.0);
-    image.drawInRect(CGRectMake(0, 0, scaledToSize.width, scaledToSize.height))
-    let newImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return newImage;
-  }
-
   static func getUInt32Buffer(inputImage: UIImage) -> [UInt32] {
-
     let inputCGImage = inputImage.CGImage
     let inputWidth = CGImageGetWidth(inputCGImage)
     let inputHeight = CGImageGetHeight(inputCGImage)
@@ -108,30 +99,13 @@ class ImageUtilities {
   }
 
   static func getFloatBuffer(inputImage: UIImage) -> [Float] {
-    let inputCGImage = inputImage.CGImage
-    let inputWidth = CGImageGetWidth(inputCGImage)
-    let inputHeight = CGImageGetHeight(inputCGImage)
-    let colorSpace = CGColorSpaceCreateDeviceRGB()
-    let bytesPerPixel = 4 //CGImageGetBitsPerPixel(inputCGImage) / 8
-    let bitsPerComponent = 8 //CGImageGetBitsPerComponent(inputCGImage)
-    let inputBytesPerRow = bytesPerPixel * inputWidth;
-    let alphaInfo = CGImageAlphaInfo.PremultipliedLast.rawValue //CGImageGetAlphaInfo(inputCGImage)
-    var bitmapInfo = CGBitmapInfo.ByteOrder32Big.rawValue
-    bitmapInfo |= alphaInfo & CGBitmapInfo.AlphaInfoMask.rawValue
-    var inputPixels = UnsafeMutablePointer<Pixel>.alloc(inputWidth * inputHeight)
-    let context = CGBitmapContextCreate(inputPixels, inputWidth,
-                                        inputHeight, bitsPerComponent, inputBytesPerRow,
-                                        colorSpace, bitmapInfo);
-    CGContextDrawImage(context, CGRectMake(0, 0, CGFloat(inputWidth), CGFloat(inputHeight)),
-                       inputCGImage);
+    let uint8Buffer = inputImage.getPlanarPixelArray()!
+    let inputWidth = Int(inputImage.size.width)
+    let inputHeight = Int(inputImage.size.height)
     var bytesArray = Array<Float>(count: inputWidth * inputHeight * 3, repeatedValue: 0)
-    for j in 0..<inputWidth {
-      for i in 0..<inputHeight {
-        let pixel = inputPixels[(j * inputWidth) + i]
-          bytesArray[j * inputWidth + i] = Float(pixel.red)
-          bytesArray[1 * inputWidth * inputHeight + j * inputWidth + i] = Float(pixel.green)
-          bytesArray[2 * inputWidth * inputHeight + j * inputWidth + i] = Float(pixel.blue)
-      }
+
+    for j in 0..<inputWidth * inputHeight  {
+      bytesArray[j] = Float(uint8Buffer[j])
     }
     return bytesArray
   }
@@ -157,67 +131,135 @@ class ImageUtilities {
     return diff
   }
 
+
   static func similiarityMeasurement(imageA: [Float], _ imageB:[Float], _ imageWidth: Int,
                                      _ imageHeight: Int, _ imageChannel: Int) -> Float {
     return ImageUtilities.frameDifference(imageA, imageB, imageWidth, imageHeight, imageChannel)
   }
 
-  static func similiarityMeasurement(imageA: UIImage, _ imageB:UIImage) -> Float {
-    let rgbaImageA = RGBA(image: imageA)!
-    let rgbaImageB = RGBA(image: imageB)!
+
+
+  static func similiarityMeasurement(imageA: UIImage, _ imageB:UIImage)
+    -> (Float, Float) {
+    let imageAByteBuffer = imageA.getPlanarPixelArray()!
+    let imageBByteBuffer = imageB.getPlanarPixelArray()!
+    let imageWidth = Int(imageA.size.width)
+    let imageHeight = Int(imageA.size.height)
+    // color frame difference
     var diff: Float = 0.0
-    for i in 0..<(rgbaImageA.height * rgbaImageA.width) {
-      diff += fabs(Float(rgbaImageA.pixels[i].red) - Float(rgbaImageB.pixels[i].red))
-      diff += fabs(Float(rgbaImageA.pixels[i].green) - Float(rgbaImageB.pixels[i].green))
-      diff += fabs(Float(rgbaImageA.pixels[i].blue) - Float(rgbaImageB.pixels[i].blue))
+    for i in 0..<(imageHeight * imageWidth * 3) {
+      diff += fabs(Float(imageAByteBuffer[i]) - Float(imageBByteBuffer[i]))
     }
-    diff /= Float(rgbaImageA.height * rgbaImageA.width * 3)
-    return diff
+    diff /= Float(imageHeight * imageWidth * 3)
+
+    // edge map difference
+    var imageAYBuffer = Array<Float>(count: imageWidth * imageHeight, repeatedValue: 0.0)
+    var imageBYBuffer = Array<Float>(count: imageWidth * imageHeight, repeatedValue: 0.0)
+    for i in 0..<imageWidth * imageHeight {
+      imageAYBuffer[i] = (Float(imageAByteBuffer[i]) + Float(imageAByteBuffer[i + imageWidth * imageHeight]) + Float(imageAByteBuffer[i + 2 * imageWidth * imageHeight]))/3
+      imageBYBuffer[i] = (Float(imageBByteBuffer[i]) + Float(imageBByteBuffer[i + imageWidth * imageHeight]) + Float(imageBByteBuffer[i + 2 * imageWidth * imageHeight]))/3
+    }
+    // gradient map
+    let maskHor: [Float] = [-1.0, -2.0, -1.0,
+                            0.0, 0.0, 0.0,
+                            1.0, 2.0, 1.0]
+    let maskVer: [Float] = [-1.0, 0.0, 1.0,
+                            -2.0, 0.0, 2.0,
+                            -1.0, 0.0, 1.0]
+    var imageAGradXBuffer = Array<Float>(count: imageWidth * imageHeight, repeatedValue: 0.0)
+    var imageAGradYBuffer = Array<Float>(count: imageWidth * imageHeight, repeatedValue: 0.0)
+    var imageAGradBuffer = Array<Float>(count: imageWidth * imageHeight, repeatedValue: 0.0)
+
+    var imageBGradXBuffer = Array<Float>(count: imageWidth * imageHeight, repeatedValue: 0.0)
+    var imageBGradYBuffer = Array<Float>(count: imageWidth * imageHeight, repeatedValue: 0.0)
+    var imageBGradBuffer = Array<Float>(count: imageWidth * imageHeight, repeatedValue: 0.0)
+
+    vDSP_f3x3(imageAYBuffer, vDSP_Length(imageHeight), vDSP_Length(imageWidth), maskHor, &imageAGradXBuffer)
+    vDSP_f3x3(imageAYBuffer, vDSP_Length(imageHeight), vDSP_Length(imageWidth), maskVer, &imageAGradYBuffer)
+    vDSP_vmma(imageAGradXBuffer, 1, imageAGradXBuffer, 1, imageAGradYBuffer, 1, imageAGradYBuffer, 1, &imageAGradBuffer, 1, vDSP_Length(imageWidth * imageHeight))
+
+    vDSP_f3x3(imageBYBuffer, vDSP_Length(imageHeight), vDSP_Length(imageWidth), maskHor, &imageBGradXBuffer)
+    vDSP_f3x3(imageBYBuffer, vDSP_Length(imageHeight), vDSP_Length(imageWidth), maskVer, &imageBGradYBuffer)
+    vDSP_vmma(imageBGradXBuffer, 1, imageBGradXBuffer, 1, imageBGradYBuffer, 1, imageBGradYBuffer, 1, &imageBGradBuffer, 1, vDSP_Length(imageWidth * imageHeight))
+
+    var gradDiff: Float = 0.0
+    for j in 0..<imageHeight {
+      for i in 0..<imageWidth {
+        gradDiff += fabs(sqrt(imageAGradBuffer[j * imageWidth + i]) - sqrt(imageBGradBuffer[j * imageWidth + i]))
+      }
+    }
+    gradDiff /= (Float)(imageHeight * imageWidth)
+//    let maskHor: [[Float]] = [[-1.0, -2.0, -1.0],
+//                              [0.0, 0.0, 0.0],
+//                              [1.0, 2.0, 1.0]]
+//    let maskVer: [[Float]] = [[-1.0, 0.0, 1.0],
+//                              [-2.0, 0.0, 2.0],
+//                              [-1.0, 0.0, 1.0]]
+//    var imageAGradBuffer = Array<Float>(count: imageWidth * imageHeight, repeatedValue: 0.0)
+//    var imageBGradBuffer = Array<Float>(count: imageWidth * imageHeight, repeatedValue: 0.0)
+//
+//    var gradDiff: Float = 0.0
+//    for j in 1..<imageHeight-1 {
+//      for i in 1..<imageWidth-1 {
+//        var gradAXTemp: Float = 0.0
+//        var gradAYTemp: Float = 0.0
+//        var gradBXTemp: Float = 0.0
+//        var gradBYTemp: Float = 0.0
+//        for m in -1...1 {
+//          for n in -1...1 {
+//            gradAXTemp += imageAYBuffer[(j+m) * imageWidth + (i+n)] * maskHor[m+1][n+1]
+//            gradAYTemp += imageAYBuffer[(j+m) * imageWidth + (i+n)] * maskVer[m+1][n+1]
+//            gradBXTemp += imageBYBuffer[(j+m) * imageWidth + (i+n)] * maskHor[m+1][n+1]
+//            gradBYTemp += imageBYBuffer[(j+m) * imageWidth + (i+n)] * maskVer[m+1][n+1]
+//          }
+//        }
+//        imageAGradBuffer[j * imageWidth + i] =
+//          sqrt((gradAXTemp * gradAXTemp) + (gradAYTemp * gradAYTemp))
+//        imageBGradBuffer[j * imageWidth + i] =
+//          sqrt((gradBXTemp * gradBXTemp) + (gradBYTemp * gradBYTemp))
+//        gradDiff += fabs(imageAGradBuffer[j * imageWidth + i] - imageBGradBuffer[j * imageWidth + i])
+//      }
+//    }
+//    gradDiff /= Float(imageHeight * imageWidth)
+//    NSLog("\(diff, gradDiff)")
+    return (diff, gradDiff)
   }
 
   static func imageRetrieve(testImage: UIImage, imageList: [String]) -> [Float] {
-    var scores = [Float]()
-    var testImageRawData = [Float]()
-    var resizedTestImage = testImage
-    var imageWidth = Int(resizedTestImage.size.width)
-    var imageHeight = Int(resizedTestImage.size.height)
+    var scores = [(Float, Float)]()
+    var maxScore: (Float, Float) = (FLT_MIN, FLT_MIN)
+    var minScore: (Float, Float) = (FLT_MAX, FLT_MAX)
     for image in imageList {
-      var refImage = UIImage(contentsOfFile: image)
-      if refImage == nil {
+      guard let refImage = UIImage(contentsOfFile: image) else {
         NSLog("\(image) is not an image.")
-        scores.append(FLT_MAX)
+        scores.append((FLT_MAX, FLT_MAX))
         continue
       }
-      if resizedTestImage.size != refImage!.size {
-        resizedTestImage = ImageUtilities.resizeImage(testImage, scaledToSize: refImage!.size)
-        imageWidth = Int(resizedTestImage.size.width)
-        imageHeight = Int(resizedTestImage.size.height)
-      }
-      testImageRawData = ImageUtilities.getFloatBuffer(resizedTestImage)
-      let refImageRawData = ImageUtilities.getFloatBuffer(refImage!)
-      let diff = ImageUtilities.similiarityMeasurement(resizedTestImage, refImage!)
+      let diff = ImageUtilities.similiarityMeasurement(testImage, refImage)
       scores.append(diff)
+      maxScore.0 = (diff.0 > maxScore.0) ? diff.0 : maxScore.0
+      minScore.0 = (diff.0 < minScore.0) ? diff.0 : minScore.0
+      maxScore.1 = (diff.1 > maxScore.1) ? diff.1 : maxScore.1
+      minScore.1 = (diff.1 < minScore.1) ? diff.1 : minScore.1
     }
-    return scores
+
+    var normalizedScores = [(Float, Float)]()
+    for i in 0..<scores.count {
+      let diff0 = (scores[i].0 - minScore.0) / (maxScore.0 - minScore.0 + 0.0000001)
+      let diff1 = (scores[i].1 - minScore.1) / (maxScore.1 - minScore.1 + 0.0000001)
+      normalizedScores.append((diff0, diff1))
+    }
+
+    var fusedScores = Array<Float>(count: scores.count, repeatedValue: 0.0)
+    for i in 0..<fusedScores.count {
+//      fusedScores[i] = (normalizedScores[i].0 + normalizedScores[i].1) / 2
+      fusedScores[i] = normalizedScores[i].0
+    }
+    return fusedScores
   }
 
   static func imageComparison(testImage: UIImage, _ refImage: UIImage) -> [UIImage?] {
-//    var resizedTestImage = testImage
-//    if testImage.size != refImage.size {
-//      resizedTestImage = ImageUtilities.resizeImage(testImage, scaledToSize: refImage.size)
-//    }
-//    let cgImageA = refImage.CGImage!
-//    let imageWidth = CGImageGetWidth(cgImageA)
-//    let imageHeight = CGImageGetHeight(cgImageA)
-//    let bitsPerComponent = CGImageGetBitsPerComponent(cgImageA)
-//    let bitsPerPixel = CGImageGetBitsPerPixel(cgImageA)
-//    let bytesPerRow = CGImageGetBytesPerRow(cgImageA)
-//    let colorSpace = CGColorSpaceCreateDeviceRGB()
-//    let bitmapInfo = CGImageGetBitmapInfo(cgImageA)
-//    let imageARawData = ImageUtilities.getUInt32Buffer(resizedTestImage)
-//    let imageBRawData = ImageUtilities.getUInt32Buffer(refImage)
-//
-//    var imageDiffTemp = Array<UInt32>(count: imageWidth * imageHeight, repeatedValue: RGBABlack)
+
     let rgbaTest = RGBA(image: testImage)!
     let rgbaRef = RGBA(image: refImage)!
     let rgbaDiff = RGBA(image: testImage)!
@@ -263,10 +305,6 @@ class ImageUtilities {
     }
     let diffImage = rgbaTest.toUIImage()
     let binaryImage = rgbaDiff.toUIImage()
-//    let cgProviderImageDiff = CGDataProviderCreateWithData(nil, imageDiffTemp, imageDiffTemp.count * bitsPerPixel / 8, nil)
-//    let cgImageDiff = CGImageCreate(imageWidth, imageHeight, bitsPerComponent, bitsPerPixel, bytesPerRow, colorSpace, bitmapInfo, cgProviderImageDiff, nil, false, CGColorRenderingIntent.RenderingIntentDefault)
-//    
-//    let binaryImage = UIImage(CGImage: cgImageDiff!)
     return [binaryImage, diffImage]
   }
 
@@ -282,13 +320,7 @@ class ImageUtilities {
 
     var imageRawData = Array<Array<UInt32>>()
     for image in images {
-
-      if Int(image.size.height) != imageHeight ||  Int(image.size.width) != imageWidth {
-        let resizedImage = ImageUtilities.resizeImage(image, scaledToSize: images.first!.size)
-        imageRawData.append(ImageUtilities.getUInt32Buffer(resizedImage))
-      } else {
-        imageRawData.append(ImageUtilities.getUInt32Buffer(image))
-      }
+      imageRawData.append(ImageUtilities.getUInt32Buffer(image))
     }
     var resultImageRawData = Array<UInt32>(count: imageWidth * imageHeight * images.count, repeatedValue: 0)
     for idx in 0..<imageRawData.count {
@@ -308,10 +340,9 @@ class ImageUtilities {
   }
 
   static func overlayTextImageOnImage(textImage: UIImage, _ image: UIImage) -> UIImage? {
-    var size = image.size
+    let size = image.size
     UIGraphicsBeginImageContext(size)
     let areaSize = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-    let RGBAWhite: UInt32  = 0xFFFFFFFF
     let RGBABlack: UInt32 = 0xFF000000
     let rgbaImage = RGBA(image: image)!
     var heightOfStatusBar = 40
@@ -329,7 +360,7 @@ class ImageUtilities {
     let imageNoStatusBar = rgbaImage.toUIImage()!
     imageNoStatusBar.drawInRect(areaSize)
     textImage.drawInRect(areaSize, blendMode: CGBlendMode.Normal, alpha: 1)
-    var resultImage = UIGraphicsGetImageFromCurrentImageContext()
+    let resultImage = UIGraphicsGetImageFromCurrentImageContext()
     UIGraphicsEndImageContext()
     return resultImage
   }

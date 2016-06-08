@@ -31,15 +31,16 @@ extension XCTestCase {
     // random pick one reference image to resize testImage
     let randRefImage = UIImage(contentsOfFile: imageList.first!)
     if randRefImage!.size != testImage!.size {
-      testImage = ImageUtilities.resizeImage(testImage!, scaledToSize: randRefImage!.size)
+      testImage = UIImage.imageResize(testImage!, scaledToSize: randRefImage!.size)
     }
 
-    var similiarityScores = ImageUtilities.imageRetrieve(testImage!, imageList: imageList)
+    let similiarityScores = ImageUtilities.imageRetrieve(testImage!, imageList: imageList)
     let ranking = Utilities.sortWithIndex(similiarityScores, ascending: true)
     let end = NSDate()
     let elapsedTime = end.timeIntervalSinceDate(start)
+    NSLog("\(elapsedTime)")
     NSLog("\(ranking)")
-    if ranking.first!.1 > 30.0 {
+    if ranking.first!.1 > 0.3 {
       return
     }
     let topRankImage = UIImage(contentsOfFile: imageList[ranking.first!.0])
@@ -56,23 +57,23 @@ extension XCTestCase {
       textOffset /= 2
     }
 
-    var textRef = "Ground Truth"
+    let textRef = "Ground Truth"
     var textLocation = CGRect(x: textCenter - textRef.characters.count * textOffset, y: 0, width: 1, height: 1)
     let textRefImage = UIImage.setupTextImage(textRef, imageSize: topRankImage!.size,
                                               faceRect: textLocation, textSize: textSize)
     let topRankImageWithText = ImageUtilities.overlayTextImageOnImage(
       textRefImage!, topRankImage!)
 
-    var textTest = "App Screenshot"
+    let textTest = "App Screenshot"
     textLocation = CGRect(x: textCenter - textTest.characters.count * textOffset, y: 0, width: 1, height: 1)
     let textTestImage = UIImage.setupTextImage(textTest, imageSize: testImage!.size,
                                                faceRect: textLocation, textSize: textSize)
     let testImageWithText = ImageUtilities.overlayTextImageOnImage(
       textTestImage!, testImage!)
 
-    var textGray = "Intensity Difference"
+    let textGray = "Intensity Difference"
     textLocation = CGRect(x: textCenter - textGray.characters.count * textOffset, y: 0, width: 1, height: 1)
-    var textDiffGrayImage = UIImage.setupTextImage(textGray, imageSize: testImage!.size,
+    let textDiffGrayImage = UIImage.setupTextImage(textGray, imageSize: testImage!.size,
                                                    faceRect: textLocation, textSize: textSize)
     let textDiffGrayImageWithText = ImageUtilities.overlayTextImageOnImage(
       textDiffGrayImage!, imageDiffGray!)

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		735B704E1CFFD310007DA0BE /* UIImage+GetPixelArray.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735B704D1CFFD310007DA0BE /* UIImage+GetPixelArray.swift */; };
+		735B70501CFFD481007DA0BE /* UIImage+ImageResize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735B704F1CFFD481007DA0BE /* UIImage+ImageResize.swift */; };
 		739AA4FA1CEFAC9800473C9C /* XCTestCase+ImageComparison.swift in Sources */ = {isa = PBXBuildFile; fileRef = 739AA4F91CEFAC9800473C9C /* XCTestCase+ImageComparison.swift */; };
 		739AA4FC1CEFACA000473C9C /* ImageUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 739AA4FB1CEFACA000473C9C /* ImageUtilities.swift */; };
 		73C6C68F1CF74E30007C71B7 /* UIImage_Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73C6C68E1CF74E30007C71B7 /* UIImage_Ext.swift */; };
@@ -45,6 +47,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		735B704D1CFFD310007DA0BE /* UIImage+GetPixelArray.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIImage+GetPixelArray.swift"; sourceTree = "<group>"; };
+		735B704F1CFFD481007DA0BE /* UIImage+ImageResize.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIImage+ImageResize.swift"; sourceTree = "<group>"; };
 		739AA4F91CEFAC9800473C9C /* XCTestCase+ImageComparison.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "XCTestCase+ImageComparison.swift"; sourceTree = "<group>"; };
 		739AA4FB1CEFACA000473C9C /* ImageUtilities.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageUtilities.swift; sourceTree = "<group>"; };
 		73C6C68E1CF74E30007C71B7 /* UIImage_Ext.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UIImage_Ext.swift; sourceTree = "<group>"; };
@@ -129,6 +133,8 @@
 				CE9101AE1B51551B006435D3 /* FSUtils.m */,
 				CE60102C1B4746F400773C38 /* UITestUtils.h */,
 				739AA4FB1CEFACA000473C9C /* ImageUtilities.swift */,
+				735B704D1CFFD310007DA0BE /* UIImage+GetPixelArray.swift */,
+				735B704F1CFFD481007DA0BE /* UIImage+ImageResize.swift */,
 				73C6C68E1CF74E30007C71B7 /* UIImage_Ext.swift */,
 				CE60102E1B4746F400773C38 /* Info.plist */,
 			);
@@ -297,6 +303,7 @@
 				73C6C68F1CF74E30007C71B7 /* UIImage_Ext.swift in Sources */,
 				CE9101B21B515DDE006435D3 /* XCTestCase+DeviceInfo.swift in Sources */,
 				739AA4FA1CEFAC9800473C9C /* XCTestCase+ImageComparison.swift in Sources */,
+				735B704E1CFFD310007DA0BE /* UIImage+GetPixelArray.swift in Sources */,
 				CE8C6EEA1B49323D007CF215 /* XCTestCase+Screenshots.swift in Sources */,
 				CE9101B01B51551B006435D3 /* FSUtils.m in Sources */,
 				CE9101941B51462B006435D3 /* SDStatusBarOverriderPost9_0.m in Sources */,
@@ -306,6 +313,7 @@
 				CEE1DB0A1B518FBF004460A0 /* NSString+URLEncode.m in Sources */,
 				CE9101B61B5169A8006435D3 /* XCTestCase+Session.swift in Sources */,
 				CE9101A81B51499F006435D3 /* XCTestCase+StatusBar.swift in Sources */,
+				735B70501CFFD481007DA0BE /* UIImage+ImageResize.swift in Sources */,
 				CE9101921B51462B006435D3 /* SDStatusBarOverriderPost8_3.m in Sources */,
 				739AA4FC1CEFACA000473C9C /* ImageUtilities.swift in Sources */,
 				CE9101961B51462B006435D3 /* SDStatusBarOverriderPre8_3.m in Sources */,
