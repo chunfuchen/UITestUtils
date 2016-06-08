@@ -1,12 +1,14 @@
-# TestUtils
+# UITestUtils
 
-On top of UITestUtils, I integrate the screenshot comparison capability.
-Please refer to UITestUtils/UITestUtils/XCTestCase+ImageComparison.swift 
+# New feature: Screenshot comparison for UI design verification
+On top of UITestUtils, I integrated the screenshot comparison capability.
+Please refer to UITestUtils/UITestUtils/XCTestCase+ImageComparison.swift for details.
 
-The following readme is inherited from origin [github]
-(https://github.com/zmeyc/UITestUtils). Please following the installation instruction to setup your project.
+The following README is inherited from origin [github]
+(https://github.com/zmeyc/UITestUtils). 
+Please follow the installation instructions below to setup your project.
 
-UITestUtils extend Xcode7 UI Testing framework (XCTest).
+# UITestUtils extend Xcode7 UI Testing framework (XCTest).
 
 ```swift
 func testExample() {
@@ -245,6 +247,3 @@ UITestUtils uses:
 
 * Swifter HTTP server engine. License: UITestServer/ThirdParty/swifter/LICENSE
 * SimulatorStatusMagic. MIT License: UITestUtils/ThirdParty/SimulatorStatusMagic/LICENSE
-
-
-
