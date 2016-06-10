@@ -136,8 +136,6 @@ class ImageUtilities {
     return ImageUtilities.frameDifference(imageA, imageB, imageWidth, imageHeight, imageChannel)
   }
 
-
-
   static func similiarityMeasurement(imageA: UIImage, _ imageB:UIImage)
     -> (Float, Float) {
     let imageAByteBuffer = imageA.getPlanarPixelArray()!
@@ -341,20 +339,34 @@ class ImageUtilities {
     UIGraphicsBeginImageContext(size)
     let areaSize = CGRect(x: 0, y: 0, width: size.width, height: size.height)
     let RGBABlack: UInt32 = 0xFF000000
-    let rgbaImage = RGBA(image: image)!
+    var rgbaImage = image.getPlanarPackedPixelArray()!
+    let imageWidth = Int(image.size.width)
+    let imageHeight = Int(image.size.height)
     var heightOfStatusBar = 40
-    if rgbaImage.width != 750 {
+    if imageWidth != 750 {
       heightOfStatusBar = 20
     }
-    for j in 0..<rgbaImage.height {
-      for i in 0..<rgbaImage.width {
+    for j in 0..<imageHeight {
+      for i in 0..<imageWidth {
         if j < heightOfStatusBar {
-          rgbaImage.pixels[j * rgbaImage.width + i].value = RGBABlack
+          rgbaImage[j * imageWidth + i] = RGBABlack
         }
       }
     }
-
-    let imageNoStatusBar = rgbaImage.toUIImage()!
+    let imageNoStatusBar = UIImage.bitmapToUIImage(&rgbaImage, imageHeight, imageWidth)!
+//    let rgbaImage = RGBA(image: image)!
+//    var heightOfStatusBar = 40
+//    if rgbaImage.width != 750 {
+//      heightOfStatusBar = 20
+//    }
+//    for j in 0..<rgbaImage.height {
+//      for i in 0..<rgbaImage.width {
+//        if j < heightOfStatusBar {
+//          rgbaImage.pixels[j * rgbaImage.width + i].value = RGBABlack
+//        }
+//      }
+//    }
+//    let imageNoStatusBar = rgbaImage.toUIImage()!
     imageNoStatusBar.drawInRect(areaSize)
     textImage.drawInRect(areaSize, blendMode: CGBlendMode.Normal, alpha: 1)
     let resultImage = UIGraphicsGetImageFromCurrentImageContext()

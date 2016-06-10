@@ -52,6 +52,7 @@ extension UIImage {
       pixelArray[j + 3 * imageWidth * imageHeight] = imageData[j].alpha
     }
     imageData.dealloc(imageWidth * imageHeight)
+    imageData.destroy()
     return pixelArray
   }
 
@@ -97,7 +98,62 @@ extension UIImage {
       pixelArray[4 * j + 3] = imageData[j].alpha
     }
     imageData.dealloc(imageWidth * imageHeight)
+    imageData.destroy()
     return pixelArray
+  }
+
+  func getPlanarPackedPixelArray() -> [UInt32]? {
+    struct Pixel {
+      var value: UInt32
+      var red: UInt8 {
+        get { return UInt8(value & 0xFF) }
+      }
+      var green: UInt8 {
+        get { return UInt8((value >> 8) & 0xFF) }
+      }
+      var blue: UInt8 {
+        get { return UInt8((value >> 16) & 0xFF) }
+      }
+      var alpha: UInt8 {
+        get { return UInt8((value >> 24) & 0xFF) }
+      }
+    }
+
+    guard let cgImage = self.CGImage else { return nil }
+    let imageWidth = Int(self.size.width)
+    let imageHeight = Int(self.size.height)
+    let bitsPerComponent = 8
+    let bytesPerPixel = 4
+    let bytesPerRow = imageWidth * bytesPerPixel
+    let imageData = UnsafeMutablePointer<Pixel>.alloc(imageWidth * imageHeight)
+    let colorSpace = CGColorSpaceCreateDeviceRGB()
+    var bitmapInfo: UInt32 = CGBitmapInfo.ByteOrder32Big.rawValue
+    bitmapInfo |= CGImageAlphaInfo.PremultipliedLast.rawValue & CGBitmapInfo.AlphaInfoMask.rawValue
+    guard let imageContext = CGBitmapContextCreate(imageData, imageWidth, imageHeight, bitsPerComponent, bytesPerRow, colorSpace, bitmapInfo) else { return nil }
+    CGContextDrawImage(imageContext, CGRect(origin: CGPointZero, size: self.size), cgImage)
+
+    var pixelArray = Array<UInt32>(count: imageWidth * imageHeight, repeatedValue: UInt32(0))
+
+    for j in 0..<(imageHeight * imageWidth) {
+      pixelArray[j] = imageData[j].value
+    }
+    imageData.dealloc(imageWidth * imageHeight)
+    imageData.destroy()
+    return pixelArray
+  }
+
+
+  static func bitmapToUIImage(inout bitmap: [UInt32], _ height: Int, _ width: Int) -> UIImage? {
+    let bitsPerComponent = 8 // 1
+    let bytesPerPixel = 4
+    let bytesPerRow = width * bytesPerPixel
+    let colorSpace = CGColorSpaceCreateDeviceRGB() // 2
+    var bitmapInfo: UInt32 = CGBitmapInfo.ByteOrder32Big.rawValue
+    bitmapInfo |= CGImageAlphaInfo.PremultipliedLast.rawValue & CGBitmapInfo.AlphaInfoMask.rawValue
+    let imageContext = CGBitmapContextCreateWithData(&bitmap, width, height, bitsPerComponent, bytesPerRow, colorSpace, bitmapInfo, nil, nil)
+    guard let cgImage = CGBitmapContextCreateImage(imageContext) else {return nil} // 3
+    let image = UIImage(CGImage: cgImage)
+    return image
   }
 
 }

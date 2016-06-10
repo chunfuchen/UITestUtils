@@ -57,7 +57,7 @@ extension XCTestCase {
       textOffset /= 2
     }
 
-    let blendedImage = ImageUtilities.imageBlending(topRankImage!, testImage!, Float(0.5))
+    let blendedImage = ImageUtilities.imageBlending(topRankImage!, testImage!, Float(0.25))
 
     let textRef = "Ground Truth"
     var textLocation = CGRect(x: textCenter - textRef.characters.count * textOffset, y: 0, width: 1, height: 1)

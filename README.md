@@ -2,7 +2,33 @@
 
 # New feature: Screenshot comparison for UI design verification
 On top of UITestUtils, I integrated the screenshot comparison capability.
-Please refer to UITestUtils/UITestUtils/XCTestCase+ImageComparison.swift for details.
+Please refer to <code>UITestUtils/UITestUtils/XCTestCase+ImageComparison.swift</code> for details.
+Use the following function in your UITesting codes for verifying your UI design.
+
+```swift
+func UIVerification(screenshotPath: String, referenceImageFolderPath: String) {
+...
+}
+```
+where <code>referenceImageFolderPath</code> includes all images for this test, and then underlying algorithm will retrieve the most similiar one as ground truth.
+
+## Simple usage guide
+1. Create a UI Testing target in your project.
+2. Use UI Recording features in Xcode 7 to record the navigation flow to go through all views in your testing targets or create the flow based on Acceptance Criteria.
+3. **!!!** Insert the snippet to pause simulator to assure the UI simulator does not crash. 
+    - Place <code>sleep</code> or <code>waitForDuration</code> between the codes that transit views to assure the following codes can execute correctly. E.g., after log in, you might need to wait few seconds for app to load metadata or finish the animation.
+4. Copy verfication snippet <code>screenshotAndVerification</code> from <code>ExampleAppUITest.swift</code>, please include above two lines for variable initialization. 
+5. Setup default location of reference images to the variable <code>defaultReferenceImagesFolder</code> inside the screenshotAndVerification.
+    - or pass the location of refernce images as a function paramter to override the default location.
+6. The comparison results are temporally stored in <code> ${HOME}/Temp/Screenshots/${TIMESTAMP}</code> for every UI Testing function.
+  1. In the folder, screenshotX.png denotes real screenshot during simulation. (X is increased by screenshot order.)
+  2. screenshotX.png\_vs\_${REFERENCE_FILENAME}.png\_Concat.png is the UI Testing result. Five images are concatenated.
+     1. binary difference image
+     2. pixel intensity difference
+     3. blended images (70% retrieved groud truth and 30% real screenshot)
+     4. retrieved groud truth
+     5. real screenshot
+
 
 The following README is inherited from origin [github]
 (https://github.com/zmeyc/UITestUtils). 

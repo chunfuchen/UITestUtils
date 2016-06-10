@@ -46,6 +46,42 @@ class ExampleAppUITests: XCTestCase {
     super.tearDown()
   }
 
+  var screenshotIndex = 0
+  let timeInterval = NSDate().timeIntervalSince1970
+  internal func screenshotAndVerification(referenceImages: String = "") {
+    let referenceImagesFolder: String
+    let defaultReferenceImagesFolder = realHomeDirectory + "/Documents/GBS_IBM_APPLE/UITesting/FieldQA/CP_FieldQA_Sprint3_v7_iPhone-2_1x/Sprint1/"
+    if referenceImages == "" {
+      referenceImagesFolder = defaultReferenceImagesFolder
+    } else {
+      referenceImagesFolder = referenceImages
+    }
+    let screenshotNamePrefix = realHomeDirectory + "/Temp/Screenshots/" + String(timeInterval) + "/"
+    var screenshotNamePostfix = ""
+    var screenshotName = ""
+    waitForDuration(1)
+    screenshotNamePostfix = "screenshot" + String(screenshotIndex) + ".png"
+    screenshotName = screenshotNamePrefix + screenshotNamePostfix
+    screenshotIndex += 1
+    saveScreenshot(screenshotName)
+    UIVerification(screenshotName, referenceImagesFolder)
+    waitForDuration(1)
+  }
+
+  internal func screenshot() {
+    let screenshotNamePrefix = realHomeDirectory + "/Temp/Screenshots/"
+    var screenshotNamePostfix = ""
+    var screenshotName = ""
+    waitForDuration(1)
+    screenshotNamePostfix = "screenshot" + String(screenshotIndex) + ".png"
+    screenshotName = screenshotNamePrefix + screenshotNamePostfix
+    screenshotIndex += 1
+    saveScreenshot(screenshotName)
+    waitForDuration(1)
+  }
+
+
+
   func testExample() {
     // Use recording to get started writing UI tests.
     // Use XCTAssert and related functions to verify your tests produce the correct results.
