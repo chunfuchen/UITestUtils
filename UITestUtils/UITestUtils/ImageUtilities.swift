@@ -12,6 +12,10 @@ import Accelerate
 import Darwin
 import CoreImage
 
+let heatMapColor: [UInt32] = [0xffffffcc, 0xffffeda0, 0xfffed976, 0xfffeb24c,
+                              0xfffd8d3c, 0xfffc4e2a, 0xffe31a1c, 0xffbd0026,
+                              0xff800026]
+
 struct Pixel {
   var value: UInt32
   var red: UInt8 {
@@ -232,6 +236,10 @@ class ImageUtilities {
         scores.append((FLT_MAX, FLT_MAX))
         continue
       }
+      if testImage.size != refImage.size {
+        NSLog("Image size is inconsistent, ref image(\(image)) \(refImage.size); test image \(testImage.size)")
+        continue
+      }
       let diff = ImageUtilities.similiarityMeasurement(testImage, refImage)
       scores.append(diff)
       maxScore.0 = (diff.0 > maxScore.0) ? diff.0 : maxScore.0
@@ -269,6 +277,8 @@ class ImageUtilities {
     if imageWidth != 750 {
       heightOfStatusBar = 20
     }
+//    var maxabsDiffY2: Float = -1.0
+//    var minabsDiffY2: Float = 9999999.0
     for j in 0..<imageHeight {
       for i in 0..<imageWidth {
         let testY: Float = (Float(rgbaTest.pixels[j * imageWidth + i].red) +
@@ -279,6 +289,9 @@ class ImageUtilities {
                     Float(rgbaRef.pixels[j * imageWidth + i].blue))/3
 
         let absDiffY: UInt8 = UInt8(fabs(testY - refY))
+//        let absDiffY2: Float = Float(fabs(testY - refY))
+//        maxabsDiffY2 = (absDiffY2 > maxabsDiffY2) ? absDiffY2 : maxabsDiffY2
+//        minabsDiffY2 = (absDiffY2 < minabsDiffY2) ? absDiffY2 : minabsDiffY2
         if j < heightOfStatusBar {
           rgbaTest.pixels[j * imageWidth + i].red = 0
           rgbaTest.pixels[j * imageWidth + i].green = 0
@@ -297,6 +310,19 @@ class ImageUtilities {
         }
       }
     }
+//    let rangeabsDiffY2: Float = (maxabsDiffY2 - minabsDiffY2) / 10.0
+//    for j in 0..<imageHeight {
+//      for i in 0..<imageWidth {
+//        let temp = Float(rgbaTest.pixels[j * imageWidth + i].red + 128)
+//        let index = Int(floor(temp/rangeabsDiffY2)) - 1
+//        let finalValue: UInt32 = heatMapColor[index]
+//        if j < heightOfStatusBar {
+//          rgbaTest.pixels[j * imageWidth + i].value = RGBABlack
+//        } else {
+//          rgbaTest.pixels[j * imageWidth + i].value = finalValue
+//        }
+//      }
+//    }
 
     let diffImage = rgbaTest.toUIImage()
     let binaryImage = rgbaDiff.toUIImage()
